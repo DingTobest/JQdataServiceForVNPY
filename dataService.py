@@ -8,7 +8,6 @@ from time import time, sleep
 
 from pymongo import MongoClient, ASCENDING
 
-from vnpy.data.tq.vntq import TqApi
 from vnpy.trader.vtObject import VtBarData
 from vnpy.trader.app.ctaStrategy.ctaBase import MINUTE_DB_NAME
 
