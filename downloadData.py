@@ -10,7 +10,7 @@ from dataService import *
 
 if __name__ == '__main__':
     # 每日任务下载
-    downloadAllMinuteBar()
+    # downloadAllMinuteBar()
 
     # 按日期补齐数据
-    # downloadMinuteBarByDate('2010-01-01', '2011-01-01')
+    downloadMinuteBarByDate('2010-08-08-03')

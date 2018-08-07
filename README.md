@@ -4,6 +4,8 @@
 
 提供downloadMinuteBarByDate，可以输入开始日期与结束日期，将时间段内的分钟数据写入到mongodb当中
 
+loadHistroyData，可以将下载下来的所有历史数据的csv，增加到mongodb数据库当中
+
 感谢vnpy与jqdatasdk提供的开源的工具与数据，从中获得的技术和思路收益匪浅
 
 # Dingzh.Tobest

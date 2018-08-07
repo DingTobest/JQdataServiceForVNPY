@@ -51,31 +51,50 @@ def generateVtBar(symbol, d):
 
 def loadHistoryData(data_path):
     file_list = os.listdir(data_path)
+    # 上次添加到670， BU1512已导入
+    last = 548
+
+    i = 1
+    count = len(file_list)
     for file_name in file_list:
         start = time()
 
         symbol_name = file_name[0: -8]
 
-        print(u'合约%s数据开始导入' % (symbol_name))
-
-        cl = db[symbol_name]
-        cl.ensure_index([('datetime', ASCENDING)], unique=True)  # 添加索引
+        if last <= i:
+            print(u'合约%s数据开始导入' % (symbol_name))
+        else:
+            print(u'合约%s数据已经导入，跳过' % (symbol_name))
+            i += 1
+            continue
 
         if symbol_name[0: -4] in futures_symbol_map.keys():
             symbol_name = futures_symbol_map[symbol_name[0: -4]] + symbol_name[-4:]
 
         file_path = data_path + '\\' + file_name
         minute_df = pd.read_csv(file_path, encoding='GBK')
+        i += 1
+        if minute_df.empty:
+            print(u'合约%s数据为空跳过，进度(%s / %s)' % (symbol_name, str(i), str(count)))
+            continue
+
+        cl = db[symbol_name]
+        cl.ensure_index([('datetime', ASCENDING)], unique=True)  # 添加索引
+        data_list = []
         for index, row in minute_df.iterrows():
             bar = generateVtBar(symbol_name, row)
             d = bar.__dict__
-            flt = {'datetime': bar.datetime}
-            cl.replace_one(flt, d, True)
+            # 单条插入效率太低，并且首次数据都是批量进行插入，不存在修改的问题，改为批量插入
+            # flt = {'datetime': bar.datetime}
+            # cl.replace_one(flt, d, True)
+            data_list.append(d)
+
+        cl.insert_many(data_list)
 
         e = time()
         cost = (e - start) * 1000
 
-        print(u'合约%s数据导入完成，耗时%s毫秒' % (symbol_name, cost))
+        print(u'合约%s数据导入完成，耗时%s毫秒，进度(%s / %s)' % (symbol_name, cost, str(i), str(count)))
 
     print('--------历史数据导入完成--------')
 
@@ -88,4 +107,4 @@ if __name__ == '__main__':
         futures_symbol_map[row['type'].upper()] = row['type']
     print('字典信息加载完毕，开始导入历史数据')
 
-    loadHistoryData('D:\\stockdata\\futures\\minute')
+    loadHistoryData('D:\\stockdata\\futuresminuteprices')
