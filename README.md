@@ -6,6 +6,8 @@
 
 loadHistroyData，可以将下载下来的所有历史数据的csv，增加到mongodb数据库当中
 
+loadHistroyData进行修改，添加了线程池和修改了mongodb的导入部分，提高导入效率
+
 感谢vnpy与jqdatasdk提供的开源的工具与数据，从中获得的技术和思路收益匪浅
 
 # Dingzh.Tobest
