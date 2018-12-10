@@ -9,9 +9,9 @@ from time import time, sleep
 from pymongo import MongoClient, ASCENDING
 
 from vnpy.trader.vtObject import VtBarData
-from vnpy.trader.app.ctaStrategy.ctaBase import MINUTE_DB_NAME
+from vnpy.trader.app.ctaStrategy.ctaBase import MINUTE_DB_NAME, DAILY_DB_NAME
 
-import  jqdatasdk
+import jqdatasdk
 
 # 加载配置
 config = open('config.json')
@@ -23,9 +23,29 @@ JQDATA_USER = setting['JQDATA_USER']
 JQDATA_PASSWORD = setting['JQDATA_PASSWORD']
 
 mc = MongoClient(MONGO_HOST, MONGO_PORT)        # Mongo连接
-db = mc[MINUTE_DB_NAME]                         # 数据库
+minute_db = mc[MINUTE_DB_NAME]                         # 分钟数据库
+daily_db = mc[DAILY_DB_NAME]                    # 日线数据库
 
 #----------------------------------------------------------------------
+# 生成日Bar
+def generateDailyVtBar(symbol, date, d):
+    """生成K线"""
+    bar = VtBarData()
+    bar.vtSymbol = symbol
+    bar.symbol = symbol
+    bar.open = float(d['open'])
+    bar.high = float(d['high'])
+    bar.low = float(d['low'])
+    bar.close = float(d['close'])
+    bar.date = datetime.strptime(date[0:10], '%Y-%m-%d').strftime('%Y%m%d')
+    bar.time = ''
+    bar.datetime = datetime.strptime(bar.date, '%Y%m%d')
+    bar.volume = d['volume']
+
+    return bar
+
+#----------------------------------------------------------------------
+# 生成分钟Bar
 def generateVtBar(symbol, time, d):
     """生成K线"""
     bar = VtBarData()
@@ -43,11 +63,36 @@ def generateVtBar(symbol, time, d):
     return bar
 
 #----------------------------------------------------------------------
+# 单合约日线下载并保存到mongodb
+def downDailyBarBySymbol(symbol, info, trade_date):
+    start = time()
+
+    symbol_name = info['name']
+    cl = daily_db[symbol_name]
+    cl.ensure_index([('datetime', ASCENDING)], unique=True)  # 添加索引
+
+    # 在此时间段内可以获取期货夜盘数据
+    daily_df = jqdatasdk.get_price(symbol, start_date=trade_date, end_date=trade_date, frequency='daily')
+
+    # 将数据传入到数据队列当中
+    for index, row in daily_df.iterrows():
+        bar = generateDailyVtBar(symbol_name, str(index), row)
+        d = bar.__dict__
+        flt = {'datetime': bar.datetime}
+        cl.replace_one(flt, d, True)
+
+    e = time()
+    cost = (e - start) * 1000
+
+    print(u'合约%s日线数据下载完成%s，耗时%s毫秒' % (symbol_name, trade_date, cost))
+
+#----------------------------------------------------------------------
+# 单合约分钟线下载并保存到mongodb
 def downMinuteBarBySymbol(symbol, info, today, pre_trade_day):
     start = time()
 
     symbol_name = info['name']
-    cl = db[symbol_name]
+    cl = minute_db[symbol_name]
     cl.ensure_index([('datetime', ASCENDING)], unique=True)  # 添加索引
 
     # 在此时间段内可以获取期货夜盘数据
@@ -90,7 +135,7 @@ def downloadAllMinuteBar():
 
 #----------------------------------------------------------------------
 # 按日期一次性补全数据
-def downloadMinuteBarByDate(start_date, end_date=datetime.today().date()):
+def downloadBarByDate(start_date, end_date=datetime.today().date()):
     jqdatasdk.auth(JQDATA_USER, JQDATA_PASSWORD)
     """下载所有配置中的合约的分钟线数据"""
     print('-' * 50)
@@ -108,6 +153,9 @@ def downloadMinuteBarByDate(start_date, end_date=datetime.today().date()):
         symbols_df = jqdatasdk.get_all_securities(types=['futures'], date=trade_date)
 
         for index, row in symbols_df.iterrows():
+            # 下载合约的日线数据
+            downDailyBarBySymbol(index, row, str(trade_date_list[i]))
+            # 下载合约的分钟线数据
             downMinuteBarBySymbol(index, row, str(trade_date_list[i]), str(trade_date_list[i-1]))
 
         i += 1
