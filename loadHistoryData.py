@@ -34,9 +34,9 @@ daily_db = mc[DAILY_DB_NAME]  # 数据库
 futures_symbol_map = {}
 
 # 分钟线数据路径
-data_path = 'D:\\stockdata\\futuresminuteprices'
+data_path = 'D:\\stockdata\\indexminuteprices'
 
-daily_data_path = 'D:\\stockdata\\futuresdailyprices'
+daily_data_path = 'D:\\stockdata\\indexdailyprices2'
 
 # data_path = 'D:\\stockdata\\futures\\minute'  # 测试路径
 
@@ -65,6 +65,20 @@ def generateVtBar(symbol, d):
     bar.volume = d['volume']
 
     return bar
+    # 另外一种文件格式
+    # bar = VtBarData()
+    # bar.vtSymbol = symbol
+    # bar.symbol = symbol
+    # bar.open = float(d['Open'])
+    # bar.high = float(d['High'])
+    # bar.low = float(d['Low'])
+    # bar.close = float(d['Close'])
+    # bar.date = datetime.strptime(d['Date'][0:10], '%Y-%m-%d').strftime('%Y%m%d')
+    # bar.time = d['Time']
+    # bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+    # bar.volume = d['TotalVolume']
+    #
+    # return bar
 
 # 生成日Bar
 def generateDailyVtBar(symbol, d):
@@ -87,13 +101,15 @@ def generateDailyVtBar(symbol, d):
 def loadCsvData(file_name):
     start = time()
     if file_lock.acquire():
-        symbol_name = file_name[0: -8]
+        # symbol_name = file_name[0: -8]
+        symbol_name = file_name[0: -4]
         file_path = data_path + '\\' + file_name
         print(u'合约%s数据开始导入' % (symbol_name))
         file_lock.release()
 
-    if symbol_name[0: -4] in futures_symbol_map.keys():
-        symbol_name = futures_symbol_map[symbol_name[0: -4]] + symbol_name[-4:]
+    if symbol_name[-4:] != '8888' and symbol_name[-4:] != '8888':
+        if symbol_name[0: -4] in futures_symbol_map.keys():
+            symbol_name = futures_symbol_map[symbol_name[0: -4]] + symbol_name[-4:]
 
     minute_df = pd.read_csv(file_path, encoding='GBK')
     global pos
@@ -106,7 +122,7 @@ def loadCsvData(file_name):
         print(u'合约%s数据为空跳过，进度(%s / %s)' % (symbol_name, str(pos_index), str(count)))
         return
 
-    cl = daily_db[symbol_name]
+    cl = minute_db[symbol_name]
     cl.ensure_index([('datetime', ASCENDING)], unique=True)  # 添加索引
     data_list = []
     for index, row in minute_df.iterrows():
@@ -129,8 +145,9 @@ def loadDailyCsvData(file_name):
         print(u'合约%s数据开始导入' % (symbol_name))
         file_lock.release()
 
-    if symbol_name[0: -4] in futures_symbol_map.keys():
-        symbol_name = futures_symbol_map[symbol_name[0: -4]] + symbol_name[-4:]
+    if symbol_name[-4:] != '8888' and symbol_name[-4:] != '9999':
+        if symbol_name[0: -4] in futures_symbol_map.keys():
+            symbol_name = futures_symbol_map[symbol_name[0: -4]] + symbol_name[-4:]
 
     daily_df = pd.read_csv(file_path, encoding='GBK')
     global pos
@@ -168,7 +185,7 @@ def loadHistoryData():
     global count
     count = len(file_list)
     # 增加4个线程的线程池，多线程来提高导入效率
-    pool = threadpool.ThreadPool(4)
+    pool = threadpool.ThreadPool(1)
     requests = threadpool.makeRequests(loadCsvData, file_list)
     for req in requests:
         pool.putRequest(req)
@@ -203,8 +220,10 @@ if __name__ == '__main__':
         futures_symbol_map[row['type'].upper()] = row['type']
     print('字典信息加载完毕，开始导入历史数据')
 
-    # 导入历史的分钟线数据
-    # loadHistoryData()
-
     # 导入历史的日线数据
     loadDailyHistoryData()
+
+    # 导入历史的分钟线数据
+    loadHistoryData()
+
+

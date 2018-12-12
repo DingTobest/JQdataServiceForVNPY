@@ -154,7 +154,7 @@ def downloadBarByDate(start_date, end_date=datetime.today().date()):
 
         for index, row in symbols_df.iterrows():
             # 下载合约的日线数据
-            downDailyBarBySymbol(index, row, str(trade_date_list[i]))
+            downDailyBarBySymbol(index, row, str(trade_date_list[i - 1]))
             # 下载合约的分钟线数据
             downMinuteBarBySymbol(index, row, str(trade_date_list[i]), str(trade_date_list[i-1]))
 

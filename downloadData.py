@@ -13,4 +13,4 @@ if __name__ == '__main__':
     # downloadAllMinuteBar()
 
     # 按日期补齐数据
-    downloadBarByDate('2018-11-13')
+    downloadBarByDate('2018-12-12')
