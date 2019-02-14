@@ -167,7 +167,7 @@ def downloadBarByDate(start_date, end_date=datetime.today().date()):
 
 #----------------------------------------------------------------------
 # 合约列表补全数据
-def downloadBarByDate(symbols_list, start_date, end_date=datetime.today().date()):
+def downloadSymbolBarByDate(symbols_list, start_date, end_date=datetime.today().date()):
     jqdatasdk.auth(JQDATA_USER, JQDATA_PASSWORD)
     """下载所有配置中的合约的分钟线数据"""
     print('-' * 50)

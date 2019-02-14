@@ -16,4 +16,4 @@ if __name__ == '__main__':
     downloadBarByDate('2019-02-11')
 
     # 按合约列表和日期补齐数据
-    # downloadBarByDate(['I8888', 'CU8888'], '2010-01-01')
+    # downloadSymbolBarByDate(['I8888', 'CU8888'], '2010-01-01')
