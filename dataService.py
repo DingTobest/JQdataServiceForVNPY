@@ -165,5 +165,40 @@ def downloadBarByDate(start_date, end_date=datetime.today().date()):
     print('-' * 50)
     return
 
+#----------------------------------------------------------------------
+# 合约列表补全数据
+def downloadBarByDate(symbols_list, start_date, end_date=datetime.today().date()):
+    jqdatasdk.auth(JQDATA_USER, JQDATA_PASSWORD)
+    """下载所有配置中的合约的分钟线数据"""
+    print('-' * 50)
+    print(u'开始下载合约分钟线数据')
+    print('-' * 50)
 
+    symbols_map = {}
+    for symbol in symbols_list:
+        symbols_map[symbol] = 1
+
+    trade_date_list = jqdatasdk.get_trade_days(start_date=start_date, end_date=end_date)
+
+    i = 0
+    for trade_date in trade_date_list:
+        if i == 0:
+            i = 1
+            continue
+
+        symbols_df = jqdatasdk.get_all_securities(types=['futures'], date=trade_date)
+
+        for index, row in symbols_df.iterrows():
+            if row['name'] in symbols_map.keys():
+                # 下载合约的日线数据
+                downDailyBarBySymbol(index, row, str(trade_date_list[i - 1]))
+                # 下载合约的分钟线数据
+                downMinuteBarBySymbol(index, row, str(trade_date_list[i]), str(trade_date_list[i-1]))
+
+        i += 1
+
+    print('-' * 50)
+    print(u'合约分钟线数据下载完成')
+    print('-' * 50)
+    return
     

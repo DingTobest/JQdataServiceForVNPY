@@ -13,4 +13,7 @@ if __name__ == '__main__':
     # downloadAllMinuteBar()
 
     # 按日期补齐数据
-    downloadBarByDate('2018-12-12')
+    downloadBarByDate('2019-02-11')
+
+    # 按合约列表和日期补齐数据
+    # downloadBarByDate(['I8888', 'CU8888'], '2010-01-01')
