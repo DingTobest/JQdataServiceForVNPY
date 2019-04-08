@@ -10,9 +10,6 @@ loadHistroyData进行修改，添加了线程池和修改了mongodb的导入部�
 
 感谢vnpy与jqdatasdk提供的开源的工具与数据，从中获得的技术和思路收益匪浅
 
-## 2019-04-08内容更新
-1. 增加了单元测试data_server_test.py，mock了jqdata的接口，用来完成对数据服务的测试
-
 ## 2018-12-10内容更新
 1. 增加日线按日期进行补全的部分，现在调用downloadBarByDate，可以按日期来补全日线和分钟线了
 
